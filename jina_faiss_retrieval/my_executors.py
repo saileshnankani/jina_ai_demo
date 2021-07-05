@@ -33,8 +33,11 @@ class FaissIndexer(Executor):  # Simple exact FAISS indexer
                 dists, matches = self._index.search(doc.embedding, 10)  # top 10 matches
                 rank = 1
                 for d, i in zip(dists[0], matches[0]):
-                    doc_copy = Document(self._docs[int(i)], copy=True)
-                    doc_copy.score = d
-                    doc.matches.append(doc_copy)
-                    f.write(f"{int(doc.tags['id'])}\t{int(d.tags['id'])}\t{rank}\n")
-                    rank += 1
+                    try:
+                        doc_copy = Document(self._docs[int(i)], copy=True)
+                        doc_copy.score = d
+                        doc.matches.append(doc_copy)
+                        f.write(f"{int(doc.tags['id'])}\t{int(d.tags['id'])}\t{rank}\n")
+                        rank += 1
+                    except:
+                        pass
