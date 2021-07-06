@@ -11,17 +11,17 @@ from jina.parsers.helloworld import set_hw_chatbot_parser
 from jina.types.document.generators import from_csv
 
 if __name__ == '__main__':
-    from my_executors import TransformerEmbed, FaissIndexer
+    from my_executors import MyTransformer, MyIndexer
 else:
-    from .my_executors import TransformerEmbed, FaissIndexer
+    from .my_executors import MyTransformer, MyIndexer
 
 
 def _get_flow(args):
     """Ensure the same flow is used in hello world example and system test."""
     return (
         Flow(cors=True)
-        .add(name="encoder", uses=TransformerEmbed)
-        .add(name="indexer", uses=FaissIndexer, workspace=args.workdir)
+        .add(name="encoder", uses=MyTransformer, parallel=1)
+        .add(name="indexer", uses=MyIndexer, workspace=args.workdir)
     )
 
 
@@ -44,7 +44,6 @@ def index_generator():
             d.text = data[1]
             yield d
 
-
 def query_generator():
     """
     Define data as Document to be indexed.
@@ -63,6 +62,7 @@ def query_generator():
             # doc
             d.text = data[1]
             yield d
+
 
 
 def hello_world(args):
@@ -90,8 +90,8 @@ def hello_world(args):
     with f:
         f.index(index_generator, batch_size=8, show_progress=True)
         f.search(query_generator, batch_size=8, show_progress=True)
+        
         return
-
 
 if __name__ == '__main__':
     args = set_hw_chatbot_parser().parse_args()
