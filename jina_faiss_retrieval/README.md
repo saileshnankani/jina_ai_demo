@@ -7,5 +7,5 @@ Modified example from https://gist.github.com/tadejsv/32091353449c301c6506f42e70
 ```
 conda create -n jina-2.0 -c conda-forge -c huggingface faiss-cpu datasets
 conda activate jina-2.0
-pip install jina sentence-transformers --pre
+pip install jina sentence-transformers
 ```
