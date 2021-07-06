@@ -10,7 +10,7 @@ else:
     from .my_executors import TransformerEmbed, FaissIndexer
 
 
-def _get_flow(args):
+def _get_flow():
     """Ensure the same flow is used in hello world example and system test."""
     return (
         Flow(cors=True)
