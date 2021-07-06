@@ -16,41 +16,22 @@ else:
     from .my_executors import MyTransformer, MyIndexer
 
 
-def _get_flow(args):
+def _get_flow():
     """Ensure the same flow is used in hello world example and system test."""
     return (
         Flow(cors=True)
         .add(name="encoder", uses=MyTransformer, parallel=1)
-        .add(name="indexer", uses=MyIndexer, workspace=args.workdir)
+        .add(name="indexer", uses=MyIndexer)
     )
 
 
-def index_generator():
+def document_generator(file_name):
     """
     Define data as Document to be indexed.
     """
     import csv
     notebook_path = os.path.abspath("trial.ipynb")
-    data_path = os.path.join(os.path.dirname(notebook_path), 'collection.short.tsv')
-
-    # Get Document and ID
-    with open(data_path, newline="") as f:
-        reader = csv.reader(f, delimiter='\t')
-        for data in reader:
-            d = Document()
-            # docid
-            d.tags['id'] = int(data[0])
-            # doc
-            d.text = data[1]
-            yield d
-
-def query_generator():
-    """
-    Define data as Document to be indexed.
-    """
-    import csv
-    notebook_path = os.path.abspath("trial.ipynb")
-    data_path = os.path.join(os.path.dirname(notebook_path), 'queries.short.tsv')
+    data_path = os.path.join(os.path.dirname(notebook_path), file_name)
 
     # Get Document and ID
     with open(data_path, newline="") as f:
@@ -64,14 +45,10 @@ def query_generator():
             yield d
 
 
-
-def hello_world(args):
+def run_retrieval():
     """
-    Execute the chatbot example.
-
-    :param args: arguments passed from CLI
+    Runs the retrieval using Faiss
     """
-    Path(args.workdir).mkdir(parents=True, exist_ok=True)
 
     with ImportExtensions(
         required=True,
@@ -83,16 +60,15 @@ def hello_world(args):
 
         assert [torch, transformers]  #: prevent pycharm auto remove the above line
 
-    f = _get_flow(args)
+    f = _get_flow()
     f.plot()
 
     # index it!
     with f:
-        f.index(index_generator, batch_size=8, show_progress=True)
-        f.search(query_generator, batch_size=8, show_progress=True)
-        
+        f.index(document_generator('collection.short.tsv'), batch_size=8, show_progress=True)
+        f.search(document_generator('queries.short.tsv'), batch_size=8, show_progress=True)
         return
 
+
 if __name__ == '__main__':
-    args = set_hw_chatbot_parser().parse_args()
-    hello_world(args)
+    run_retrieval()
