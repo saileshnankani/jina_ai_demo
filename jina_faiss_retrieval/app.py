@@ -1,14 +1,8 @@
 import os
-import urllib.request
-import webbrowser
 from pathlib import Path
 
 from jina import Flow, Document
 from jina.importer import ImportExtensions
-from jina.logging.predefined import default_logger
-from jina.logging.profile import ProgressBar
-from jina.parsers.helloworld import set_hw_chatbot_parser
-from jina.types.document.generators import from_csv
 
 if __name__ == '__main__':
     from my_executors import TransformerEmbed, FaissIndexer
@@ -21,17 +15,17 @@ def _get_flow(args):
     return (
         Flow(cors=True)
         .add(name="encoder", uses=TransformerEmbed)
-        .add(name="indexer", uses=FaissIndexer, workspace=args.workdir)
+        .add(name="indexer", uses=FaissIndexer)
     )
 
 
-def index_generator():
+def document_generator(file_name):
     """
     Define data as Document to be indexed.
     """
     import csv
     notebook_path = os.path.abspath("trial.ipynb")
-    data_path = os.path.join(os.path.dirname(notebook_path), 'collection.short.tsv')
+    data_path = os.path.join(os.path.dirname(notebook_path), file_name)
 
     # Get Document and ID
     with open(data_path, newline="") as f:
@@ -45,33 +39,10 @@ def index_generator():
             yield d
 
 
-def query_generator():
+def run_retrieval():
     """
-    Define data as Document to be indexed.
+    Runs the retrieval using Faiss
     """
-    import csv
-    notebook_path = os.path.abspath("trial.ipynb")
-    data_path = os.path.join(os.path.dirname(notebook_path), 'queries.short.tsv')
-
-    # Get Document and ID
-    with open(data_path, newline="") as f:
-        reader = csv.reader(f, delimiter='\t')
-        for data in reader:
-            d = Document()
-            # docid
-            d.tags['id'] = int(data[0])
-            # doc
-            d.text = data[1]
-            yield d
-
-
-def hello_world(args):
-    """
-    Execute the chatbot example.
-
-    :param args: arguments passed from CLI
-    """
-    Path(args.workdir).mkdir(parents=True, exist_ok=True)
 
     with ImportExtensions(
         required=True,
@@ -83,16 +54,15 @@ def hello_world(args):
 
         assert [torch, transformers]  #: prevent pycharm auto remove the above line
 
-    f = _get_flow(args)
+    f = _get_flow()
     f.plot()
 
     # index it!
     with f:
-        f.index(index_generator, batch_size=8, show_progress=True)
-        f.search(query_generator, batch_size=8, show_progress=True)
+        f.index(document_generator('collection.short.tsv'), batch_size=8, show_progress=True)
+        f.search(document_generator('queries.short.tsv'), batch_size=8, show_progress=True)
         return
 
 
 if __name__ == '__main__':
-    args = set_hw_chatbot_parser().parse_args()
-    hello_world(args)
+    run_retrieval()
