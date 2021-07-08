@@ -22,7 +22,8 @@ class FaissIndexer(Executor):  # Simple exact FAISS indexer
         super().__init__(**kwargs)
         self._docs = DocumentArray()
         res = faiss.StandardGpuResources()
-        self._index = faiss.index_cpu_to_all_gpus(res, 0, faiss.IndexFlatL2(384))
+        index_flat = faiss.IndexFlatL2(384)
+        self._index = faiss.index_cpu_to_all_gpus(res, 0, index_flat)
         Path(self.workspace).mkdir(parents=True, exist_ok=True)
 
     @requests(on='/index')
