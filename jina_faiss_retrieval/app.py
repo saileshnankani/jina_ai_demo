@@ -15,8 +15,8 @@ def _get_flow(index_dir):
     """Ensure the same flow is used in hello world example and system test."""
     return (
         Flow(cors=True)
-        .add(name="encoder", uses=TransformerEmbed)
-        .add(name="indexer", uses=FaissIndexer,  workspace=index_dir)
+        .add(name="encoder", parallel=4, uses=TransformerEmbed)
+        .add(name="indexer", parallel=4, uses=FaissIndexer,  workspace=index_dir)
     )
 
 
@@ -60,9 +60,9 @@ def run_retrieval(index_dir, args):
     # index it!
     with f:
         if args.index:
-            f.index(document_generator('collection.short.tsv'), batch_size=8, show_progress=True)
+            f.index(document_generator('collection.short.tsv'), batch_size=30, show_progress=True)
         if args.search:
-            f.search(document_generator('queries.short.tsv'), batch_size=8, show_progress=True)
+            f.search(document_generator('queries.short.tsv'), batch_size=30, show_progress=True)
         return
 
 
