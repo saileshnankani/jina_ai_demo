@@ -22,8 +22,8 @@ class FaissIndexer(Executor):  # Simple exact FAISS indexer
         super().__init__(**kwargs)
         self._docs = DocumentArray()
         res = faiss.StandardGpuResources()
-        index_flat = faiss.IndexFlatL2(384)
-        self._index = faiss.index_cpu_to_all_gpus(index_flat)
+        self._index_flat = faiss.IndexFlatL2(384)
+        self._index = faiss.index_cpu_to_all_gpus(self._index_flat)
         Path(self.workspace).mkdir(parents=True, exist_ok=True)
 
     @requests(on='/index')
@@ -31,7 +31,7 @@ class FaissIndexer(Executor):  # Simple exact FAISS indexer
         self._docs.extend(docs)
         _ = [self._index.add(d.embedding) for d in docs]
         index_file = os.path.join(self.workspace, "index_file")
-        faiss.write_index(self._index, index_file)
+        faiss.write_index(self._index_flat, index_file)
         self._docs.save('data.bin', file_format='binary')
 
     @requests(on='/search')
