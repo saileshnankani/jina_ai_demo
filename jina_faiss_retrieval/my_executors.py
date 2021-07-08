@@ -1,7 +1,9 @@
 import faiss
+import os
 from datasets import load_dataset
 from jina import Document, DocumentArray, Executor, Flow, requests
 from sentence_transformers import SentenceTransformer
+from pathlib import Path
 
 
 class TransformerEmbed(Executor):  # Embedd text using transformers
@@ -20,17 +22,25 @@ class FaissIndexer(Executor):  # Simple exact FAISS indexer
         super().__init__(**kwargs)
         self._docs = DocumentArray()
         self._index = faiss.IndexFlatL2(384)
+        Path(self.workspace).mkdir(parents=True, exist_ok=True)
 
     @requests(on='/index')
     def index(self, docs: DocumentArray, **kwargs):
         self._docs.extend(docs)
         _ = [self._index.add(d.embedding) for d in docs]
+        index_file = os.path.join(self.workspace, "index_file")
+        faiss.write_index(self._index, index_file)
+        self._docs.save('data.bin', file_format='binary')
 
     @requests(on='/search')
     def search(self, docs: DocumentArray, **kwargs):
+        index_file = os.path.join(self.workspace, "index_file")
+        print("index_file: ", index_file)
+        index = faiss.read_index(index_file)
+        self._docs = DocumentArray.load('data.bin', file_format='binary')
         with open("myfile.txt", "w") as f:
             for doc in docs:
-                dists, matches = self._index.search(doc.embedding, 10)  # top 10 matches
+                dists, matches = index.search(doc.embedding, 10)  # top 10 matches
                 rank = 1
                 for d, i in zip(dists[0], matches[0]):
                     doc_copy = Document(self._docs[int(i)], copy=True)
