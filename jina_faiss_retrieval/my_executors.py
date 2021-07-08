@@ -38,7 +38,8 @@ class FaissIndexer(Executor):  # Simple exact FAISS indexer
     def search(self, docs: DocumentArray, **kwargs):
         index_file = os.path.join(self.workspace, "index_file")
         print("index_file: ", index_file)
-        index = faiss.read_index(index_file)
+        flat_index = faiss.read_index(index_file)
+        index = faiss.index_cpu_to_all_gpus(flat_index)
         self._docs = DocumentArray.load('data.bin', file_format='binary')
         with open("myfile.txt", "w") as f:
             for doc in docs:
