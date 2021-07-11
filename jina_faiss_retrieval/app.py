@@ -20,26 +20,6 @@ def _get_flow(index_dir):
     )
 
 
-def document_generator(file_name):
-    """
-    Define data as Document to be indexed.
-    """
-    import csv
-    notebook_path = os.path.abspath("trial.ipynb")
-    data_path = os.path.join(os.path.dirname(notebook_path), file_name)
-
-    # Get Document and ID
-    with open(data_path, newline="") as f:
-        reader = csv.reader(f, delimiter='\t')
-        for data in reader:
-            d = Document()
-            # docid
-            d.tags['id'] = int(data[0])
-            # doc
-            d.text = data[1]
-            yield d
-
-
 def run_retrieval(index_dir, args):
     """
     Runs the retrieval using Faiss
@@ -60,10 +40,11 @@ def run_retrieval(index_dir, args):
     # index it!
     with f:
         if args.index:
-            documents = DocumentArrayMemmap('collection.short.tsv')
-            f.index(documents, batch_size=30, show_progress=True)
+            corpus_documents = DocumentArrayMemmap('collection.short.tsv')
+            f.index(corpus_documents, batch_size=30, show_progress=True)
         if args.search:
-            f.search(document_generator('queries.short.tsv'), batch_size=30, show_progress=True)
+            query_documents = DocumentArrayMemmap('queries.short.tsv')
+            f.search(query_documents, batch_size=30, show_progress=True)
         return
 
 

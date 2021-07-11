@@ -1,9 +1,10 @@
 import faiss
 import os
 from datasets import load_dataset
-from jina import Document, DocumentArray, Executor, Flow, requests
+from jina import Document, DocumentArray, DocumentArrayMemmap, Executor, Flow, requests
 from sentence_transformers import SentenceTransformer
 from pathlib import Path
+from typing import Union
 
 
 class TransformerEmbed(Executor):  # Embedd text using transformers
@@ -25,7 +26,7 @@ class FaissIndexer(Executor):  # Simple exact FAISS indexer
         Path(self.workspace).mkdir(parents=True, exist_ok=True)
 
     @requests(on='/index')
-    def index(self, docs: DocumentArray, **kwargs):
+    def index(self, docs: Union[DocumentArray, DocumentArrayMemmap], **kwargs):
         self._docs.extend(docs)
         _ = [self._index.add(d.embedding) for d in docs]
         index_file = os.path.join(self.workspace, "index_file")
@@ -33,7 +34,7 @@ class FaissIndexer(Executor):  # Simple exact FAISS indexer
         self._docs.save('data.bin', file_format='binary')
 
     @requests(on='/search')
-    def search(self, docs: DocumentArray, **kwargs):
+    def search(self, docs: Union[DocumentArray, DocumentArrayMemmap], **kwargs):
         index_file = os.path.join(self.workspace, "index_file")
         print("index_file: ", index_file)
         index = faiss.read_index(index_file)
