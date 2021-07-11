@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from jina import Flow, Document
+from jina import Flow, Document, DocumentArrayMemmap
 from jina.importer import ImportExtensions
 from pathlib import Path
 
@@ -60,7 +60,8 @@ def run_retrieval(index_dir, args):
     # index it!
     with f:
         if args.index:
-            f.index(document_generator('collection.short.tsv'), batch_size=30, show_progress=True)
+            documents = DocumentArrayMemmap('collection.short.tsv')
+            f.index(documents, batch_size=30, show_progress=True)
         if args.search:
             f.search(document_generator('queries.short.tsv'), batch_size=30, show_progress=True)
         return
